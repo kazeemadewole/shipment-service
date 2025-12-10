@@ -3,6 +3,7 @@ import { ShipmentService } from '../shipment.service';
 import { ShipmentRepository } from '../../repositories/shipment.repository';
 import { CreateShipmentDTO, UpdateShipmentDTO } from '../../validations/shipment.validation';
 
+const validId = '507f1f77bcf86cd799439011';
 describe('ShipmentService', () => {
   let shipmentService: ShipmentService;
   let shipmentRepository: jest.Mocked<ShipmentRepository>;
@@ -30,12 +31,12 @@ describe('ShipmentService', () => {
   });
 
   it('should call getSingleShipment and return a shipment', async () => {
-    const mockShipment = { id: '123', trackingNumber: 'TRK001' };
+    const mockShipment = { id: validId, trackingNumber: 'TRK001' };
     shipmentRepository.getById.mockResolvedValue(mockShipment as any);
 
-    const result = await shipmentService.getSingleShipment('123');
+    const result = await shipmentService.getSingleShipment(validId);
 
-    expect(shipmentRepository.getById).toHaveBeenCalledWith('123');
+    expect(shipmentRepository.getById).toHaveBeenCalledWith(validId);
     expect(result).toEqual(mockShipment);
   });
 
@@ -48,7 +49,7 @@ describe('ShipmentService', () => {
       destination: 'LA',
     };
 
-    const createdShipment = { ...payload, id: '1' };
+    const createdShipment = { ...payload, id: validId };
     shipmentRepository.create.mockResolvedValue(createdShipment as any);
 
     const result = await shipmentService.createShipment(payload);
@@ -59,22 +60,24 @@ describe('ShipmentService', () => {
 
   it('should call updateShipment and return updated shipment', async () => {
     const payload: UpdateShipmentDTO = { status: 'in_transit' };
-    const updatedShipment = { id: '1', trackingNumber: 'TRK001', status: 'in_transit' };
+    const updatedShipment = { id: validId, trackingNumber: 'TRK001', status: 'in_transit' };
+    shipmentRepository.getById.mockResolvedValue(updatedShipment as any);
     shipmentRepository.update.mockResolvedValue(updatedShipment as any);
 
-    const result = await shipmentService.updateShipment('1', payload);
+    const result = await shipmentService.updateShipment(validId, payload);
 
-    expect(shipmentRepository.update).toHaveBeenCalledWith('1', payload);
+    expect(shipmentRepository.update).toHaveBeenCalledWith(validId, payload);
     expect(result).toEqual(updatedShipment);
   });
 
   it('should call deleteShipment and return result', async () => {
-    const deletedShipment = { id: '1', trackingNumber: 'TRK001' };
+    const deletedShipment = { id: validId, trackingNumber: 'TRK001' };
+    shipmentRepository.getById.mockResolvedValue(deletedShipment as any);
     shipmentRepository.delete.mockResolvedValue(deletedShipment as any);
 
-    const result = await shipmentService.deleteShipment('1');
+    const result = await shipmentService.deleteShipment(validId);
 
-    expect(shipmentRepository.delete).toHaveBeenCalledWith('1');
+    expect(shipmentRepository.delete).toHaveBeenCalledWith(validId);
     expect(result).toEqual(deletedShipment);
   });
 });
