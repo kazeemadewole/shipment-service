@@ -1,0 +1,4 @@
+#!/bin/sh
+# Husky v10 compatible format
+
+npm run lint

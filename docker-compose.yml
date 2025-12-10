@@ -1,0 +1,17 @@
+version: '3.8'
+
+networks:
+  maxone:
+    driver: bridge
+
+services:
+  shipment-service:
+    env_file:
+      - .env
+    container_name: shipment-service
+    restart: always
+    build: .
+    ports:
+      - 3000
+    networks:
+      - taxtech

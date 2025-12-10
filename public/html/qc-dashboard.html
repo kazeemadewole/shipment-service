@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https:; img-src 'self' data: https:; font-src 'self' https:;"
+    />
+    <title>QC Forms Dashboard - MaxNG</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+
+      .dashboard-header {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stat-card .card-body {
+        padding: 2rem;
+      }
+
+      .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .qc-table {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .table thead th {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        font-weight: 600;
+      }
+
+      .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .status-completed {
+        background: #d1eddd;
+        color: #155724;
+      }
+      .action-btn {
+        border: none;
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        margin: 0 0.125rem;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn-outline-primary:hover,
+      .btn-outline-secondary:hover {
+        transform: translateY(-1px);
+      }
+
+      /* Image modal improvements */
+      .modal-xl {
+        max-width: 95vw;
+      }
+
+      .modal-body img {
+        transition: opacity 0.3s ease;
+      }
+
+      .spinner-border {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      @media (max-width: 768px) {
+        .table-responsive {
+          font-size: 0.875rem;
+        }
+
+        .stat-card .card-body {
+          padding: 1.5rem;
+        }
+
+        .stat-number {
+          font-size: 2rem;
+        }
+
+        .action-btn {
+          padding: 0.125rem 0.25rem;
+          margin: 0.05rem;
+        }
+
+        .pagination .page-link {
+          padding: 0.375rem 0.5rem;
+          font-size: 0.875rem;
+        }
+
+        #paginationInfo {
+          font-size: 0.875rem;
+        }
+
+        /* Stack pagination info vertically on mobile */
+        .d-flex.justify-content-between {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .d-flex.justify-content-between > div:last-child {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <div class="container-fluid" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6">
+      <div class="container">
+        <div class="py-2">
+          <a href="/" style="color: #007bff; text-decoration: none; font-weight: 600">
+            <i class="fas fa-arrow-left me-1"></i> Back to Tools Directory
+          </a>
+          <span class="mx-2">|</span>
+          <a href="/qc-form" style="color: #007bff; text-decoration: none; font-weight: 600">
+            <i class="fas fa-plus me-1"></i> New QC Form
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col">
+            <h1 class="h2 mb-0">
+              <i class="fas fa-tachometer-alt me-2"></i>
+              QC Forms Dashboard
+            </h1>
+            <p class="mb-0 opacity-75">Monitor and manage battery quality control inspections</p>
+          </div>
+          <div class="col-auto">
+            <a href="/qc-form" class="btn btn-light btn-lg">
+              <i class="fas fa-plus me-1"></i>
+              New QC Form
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Statistics Cards -->
+      <div class="row mb-4" id="statsCards">
+        <div class="col-lg-6 col-md-6 mb-3">
+          <div class="card stat-card text-center">
+            <div class="card-body">
+              <div class="stat-number text-primary" id="totalForms">0</div>
+              <div class="stat-label">Total QC Forms</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 col-md-6 mb-3">
+          <div class="card stat-card text-center">
+            <div class="card-body">
+              <div class="stat-number text-success" id="completedForms">0</div>
+              <div class="stat-label">Completed Inspections</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label">Search</label>
+              <input type="text" class="form-control" id="searchInput" placeholder="Search by serial, officer..." />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Date From</label>
+              <input type="date" class="form-control" id="dateFromFilter" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Date To</label>
+              <input type="date" class="form-control" id="dateToFilter" />
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-auto">
+              <button class="btn btn-primary" id="applyFilters">
+                <i class="fas fa-filter me-1"></i>
+                Apply Filters
+              </button>
+            </div>
+            <div class="col-auto">
+              <button class="btn btn-secondary" id="clearFilters">
+                <i class="fas fa-times me-1"></i>
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QC Forms Table -->
+      <div class="card qc-table">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            QC Forms
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead>
+                <tr>
+                  <th>Serial Number</th>
+                  <th>Officer</th>
+                  <th>Test Vehicle</th>
+                  <th>Status</th>
+                  <th>Images</th>
+                  <th>Inspection Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="qcFormsTableBody">
+                <!-- Dynamic content will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Loading State -->
+          <div class="text-center p-4 d-none" id="loadingState">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0">Loading QC forms...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div class="text-center p-4 d-none" id="emptyState">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No QC Forms Found</h5>
+            <p class="text-muted">Create your first QC form to get started.</p>
+            <a href="/qc-form" class="btn btn-primary">
+              <i class="fas fa-plus me-1"></i>
+              Create QC Form
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <div>
+          <span class="text-muted" id="paginationInfo">Showing results</span>
+        </div>
+        <nav>
+          <ul class="pagination justify-content-center mb-0" id="pagination">
+            <!-- Pagination will be dynamically generated -->
+          </ul>
+        </nav>
+        <div>
+          <!-- Spacer for alignment -->
+        </div>
+      </div>
+    </div>
+
+    <!-- QC Form Details Modal -->
+    <div class="modal fade" id="qcFormModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">QC Form Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="modalBody">
+            <!-- Modal content will be loaded here -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+      let currentPage = 1;
+      let currentFilters = {};
+
+      // Initialize dashboard
+      document.addEventListener('DOMContentLoaded', function () {
+        loadStatistics();
+        loadQCForms();
+
+        // Event listeners
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('clearFilters').addEventListener('click', clearFilters);
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters();
+          }
+        });
+
+        // Prevent default behavior on pagination clicks
+        document.addEventListener('click', function (e) {
+          if (e.target.closest('.pagination a')) {
+            e.preventDefault();
+          }
+        });
+
+        // Add event delegation for dynamically created elements
+        document.addEventListener('click', function (e) {
+          // Handle image view buttons
+          if (e.target.closest('.view-image-btn')) {
+            const button = e.target.closest('.view-image-btn');
+            const imageUrl = button.getAttribute('data-image-url');
+            const imageTitle = button.getAttribute('data-image-title');
+            viewImage(imageUrl, imageTitle);
+          }
+
+          // Handle QC form view buttons
+          if (e.target.closest('.view-qc-btn')) {
+            const button = e.target.closest('.view-qc-btn');
+            const qcId = button.getAttribute('data-qc-id');
+            viewQCForm(qcId);
+          }
+
+          // Handle QC form edit buttons
+          if (e.target.closest('.edit-qc-btn')) {
+            const button = e.target.closest('.edit-qc-btn');
+            const qcId = button.getAttribute('data-qc-id');
+            editQCForm(qcId);
+          }
+
+          // Handle pagination links
+          if (e.target.closest('.pagination-link')) {
+            const link = e.target.closest('.pagination-link');
+            const page = parseInt(link.getAttribute('data-page'));
+            if (page) {
+              changePage(page);
+            }
+          }
+
+          // Handle download image buttons
+          if (e.target.closest('.download-image-btn')) {
+            const button = e.target.closest('.download-image-btn');
+            const imageUrl = button.getAttribute('data-image-url');
+            const imageTitle = button.getAttribute('data-image-title');
+            downloadImage(imageUrl, imageTitle);
+          }
+        });
+      });
+
+      async function loadStatistics() {
+        try {
+          const response = await fetch('/qc-forms/stats', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            const stats = result.data;
+            // Only show completed forms count (total and completed should be the same)
+            document.getElementById('totalForms').textContent = stats.completed || 0;
+            document.getElementById('completedForms').textContent = stats.completed || 0;
+          }
+        } catch (error) {
+          console.error('Error loading statistics:', error);
+        }
+      }
+
+      async function loadQCForms(page = 1) {
+        showLoadingState();
+
+        try {
+          const queryParams = new URLSearchParams({
+            page: page,
+            limit: 10,
+            status: 'completed', // Only load completed forms
+            ...currentFilters,
+          });
+
+          console.log('Loading QC forms with params:', queryParams.toString()); // Debug log
+
+          const response = await fetch(`/qc-forms?${queryParams}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
+
+          const result = await response.json();
+          console.log('QC Forms API Response:', result); // Debug log
+
+          if (result.success) {
+            console.log('QC Forms data:', result.data); // Debug log
+            displayQCForms(result.data);
+            generatePagination(result.pagination);
+          } else {
+            console.log('API returned success: false, showing empty state'); // Debug log
+            showEmptyState();
+          }
+        } catch (error) {
+          console.error('Error loading QC forms:', error);
+          showEmptyState();
+        }
+      }
+
+      function displayQCForms(data) {
+        console.log('displayQCForms called with data:', data); // Debug log
+        const tbody = document.getElementById('qcFormsTableBody');
+
+        if (!data || data.length === 0) {
+          console.log('No data found, showing empty state'); // Debug log
+          showEmptyState();
+          return;
+        }
+
+        console.log('Displaying', data.length, 'QC forms'); // Debug log
+
+        try {
+          tbody.innerHTML = data
+            .map((form) => {
+              // Ensure we have all required fields with defaults
+              const safeForm = {
+                id: form.id || '',
+                battery_serial: form.battery_serial || 'N/A',
+                officer_name: form.officer_name || 'N/A',
+                test_vehicle_plate_number: form.test_vehicle_plate_number || 'N/A',
+                status: form.status || 'completed',
+                completed_date: form.completed_date,
+                created_at: form.created_at,
+                battery_image_url: form.battery_image_url,
+                terminals_image_url: form.terminals_image_url,
+              };
+
+              // Build images column
+              const imagesHtml = [];
+              if (safeForm.battery_image_url) {
+                imagesHtml.push(`<button class="btn btn-sm btn-outline-primary me-1 view-image-btn" data-image-url="${safeForm.battery_image_url}" data-image-title="Battery Image - ${safeForm.battery_serial}" title="View Battery Image">
+                  <i class="fas fa-image"></i> Battery
+                </button>`);
+              }
+              if (safeForm.terminals_image_url) {
+                imagesHtml.push(`<button class="btn btn-sm btn-outline-secondary view-image-btn" data-image-url="${safeForm.terminals_image_url}" data-image-title="Terminals Image - ${safeForm.battery_serial}" title="View Terminals Image">
+                  <i class="fas fa-image"></i> Terminals
+                </button>`);
+              }
+              const imagesColumn =
+                imagesHtml.length > 0 ? imagesHtml.join(' ') : '<span class="text-muted">No images</span>';
+
+              return `
+                <tr>
+                    <td>
+                        <strong>${safeForm.battery_serial}</strong>
+                    </td>
+                    <td>
+                        ${safeForm.officer_name}
+                    </td>
+                    <td>${safeForm.test_vehicle_plate_number}</td>
+                    <td>
+                        <span class="status-badge status-${safeForm.status}">
+                            ${safeForm.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        ${imagesColumn}
+                    </td>
+                    <td>${safeForm.completed_date ? new Date(safeForm.completed_date).toLocaleDateString() : new Date(safeForm.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-primary action-btn view-qc-btn" data-qc-id="${safeForm.id}" title="View QC Form">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-success action-btn edit-qc-btn" data-qc-id="${safeForm.id}" title="Edit QC Form">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+              `;
+            })
+            .join('');
+
+          console.log('Table HTML generated successfully, hiding loading state'); // Debug log
+          hideLoadingState();
+
+          // Ensure event listeners are attached to new elements
+          attachTableEventListeners();
+        } catch (error) {
+          console.error('Error generating table HTML:', error);
+          showEmptyState();
+        }
+      }
+
+      function attachTableEventListeners() {
+        // This function ensures all table buttons have proper event handling
+        // Event delegation is already set up in DOMContentLoaded, so this is mainly for debugging
+        console.log('Table event listeners attached');
+      }
+
+      function showLoadingState() {
+        document.getElementById('loadingState').classList.remove('d-none');
+        document.getElementById('emptyState').classList.add('d-none');
+        document.getElementById('qcFormsTableBody').innerHTML = '';
+      }
+
+      function hideLoadingState() {
+        document.getElementById('loadingState').classList.add('d-none');
+      }
+
+      function showEmptyState() {
+        document.getElementById('loadingState').classList.add('d-none');
+        document.getElementById('emptyState').classList.remove('d-none');
+        document.getElementById('qcFormsTableBody').innerHTML = '';
+      }
+
+      function applyFilters() {
+        currentFilters = {
+          search: document.getElementById('searchInput').value,
+          date_from: document.getElementById('dateFromFilter').value,
+          date_to: document.getElementById('dateToFilter').value,
+        };
+
+        // Remove empty filters
+        Object.keys(currentFilters).forEach((key) => {
+          if (!currentFilters[key]) {
+            delete currentFilters[key];
+          }
+        });
+
+        currentPage = 1;
+        loadQCForms(currentPage);
+      }
+
+      function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('dateFromFilter').value = '';
+        document.getElementById('dateToFilter').value = '';
+
+        currentFilters = {};
+        currentPage = 1;
+        loadQCForms(currentPage);
+      }
+
+      function generatePagination(pagination) {
+        const paginationEl = document.getElementById('pagination');
+
+        if (!pagination || pagination.totalPages <= 1) {
+          paginationEl.innerHTML = '';
+          return;
+        }
+
+        let paginationHTML = '';
+        const currentPage = pagination.currentPage;
+        const totalPages = pagination.totalPages;
+
+        // Previous button
+        if (currentPage > 1) {
+          paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link pagination-link" href="javascript:void(0)" data-page="${currentPage - 1}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                `;
+        } else {
+          paginationHTML += `
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </span>
+                    </li>
+                `;
+        }
+
+        // Calculate page range to display
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        // Adjust range if we're near the beginning or end
+        if (endPage - startPage < 4) {
+          if (startPage === 1) {
+            endPage = Math.min(totalPages, startPage + 4);
+          } else if (endPage === totalPages) {
+            startPage = Math.max(1, endPage - 4);
+          }
+        }
+
+        // First page + ellipsis if needed
+        if (startPage > 1) {
+          paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link pagination-link" href="javascript:void(0)" data-page="1">1</a>
+                    </li>
+                `;
+          if (startPage > 2) {
+            paginationHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+          }
+        }
+
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+          if (i === currentPage) {
+            paginationHTML += `
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">${i}</span>
+                        </li>
+                    `;
+          } else {
+            paginationHTML += `
+                        <li class="page-item">
+                            <a class="page-link pagination-link" href="javascript:void(0)" data-page="${i}">${i}</a>
+                        </li>
+                    `;
+          }
+        }
+
+        // Last page + ellipsis if needed
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) {
+            paginationHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+          }
+          paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link pagination-link" href="javascript:void(0)" data-page="${totalPages}">${totalPages}</a>
+                    </li>
+                `;
+        }
+
+        // Next button
+        if (currentPage < totalPages) {
+          paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link pagination-link" href="javascript:void(0)" data-page="${currentPage + 1}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                `;
+        } else {
+          paginationHTML += `
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </span>
+                    </li>
+                `;
+        }
+
+        paginationEl.innerHTML = paginationHTML;
+
+        // Add pagination info
+        const paginationInfo = document.getElementById('paginationInfo');
+        if (paginationInfo) {
+          const start = (currentPage - 1) * (pagination.limit || 10) + 1;
+          const end = Math.min(currentPage * (pagination.limit || 10), pagination.total || 0);
+          paginationInfo.textContent = `Showing ${start}-${end} of ${pagination.total || 0} results`;
+        }
+      }
+
+      function changePage(page) {
+        currentPage = page;
+        loadQCForms(page);
+
+        // Scroll to top of table
+        document.querySelector('.qc-table').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+
+      async function viewQCForm(id) {
+        try {
+          const response = await fetch(`/qc-forms/${id}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            displayQCFormDetails(result.data);
+            new bootstrap.Modal(document.getElementById('qcFormModal')).show();
+          }
+        } catch (error) {
+          console.error('Error loading QC form details:', error);
+          alert('Error loading QC form details');
+        }
+      }
+
+      function displayQCFormDetails(form) {
+        const modalBody = document.getElementById('modalBody');
+
+        // Safe access to nested properties with fallbacks
+        const physicalInspection = form.physical_inspection || {};
+        const batteryVisual = physicalInspection.visual_confirmation_battery || {};
+        const terminalsVisual = physicalInspection.visual_confirmation_terminals || {};
+        const telemetryData = form.telemetry_data || {};
+
+        modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Battery Information</h6>
+                        <p><strong>Serial Number:</strong> ${form.battery_serial || 'N/A'}</p>
+                        <p><strong>Test Vehicle:</strong> ${form.test_vehicle_plate_number || 'N/A'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Inspection Details</h6>
+                        <p><strong>Officer:</strong> ${form.officer_name || 'N/A'} ${form.officer_id ? `(${form.officer_id})` : ''}</p>
+                        <p><strong>Date:</strong> ${form.created_at ? new Date(form.created_at).toLocaleString() : 'N/A'}</p>
+                        <p><strong>Status:</strong> <span class="status-badge status-${form.status || 'unknown'}">${(form.status || 'unknown').replace('_', ' ').toUpperCase()}</span></p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6>Physical Inspection</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Battery Issues:</strong></p>
+                        <ul>
+                            <li>Cracks: ${batteryVisual.cracks ? 'Yes' : 'No'}</li>
+                            <li>Rust: ${batteryVisual.rust ? 'Yes' : 'No'}</li>
+                            <li>Leaks: ${batteryVisual.leaks ? 'Yes' : 'No'}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Terminal Issues:</strong></p>
+                        <ul>
+                            <li>Cracks: ${terminalsVisual.cracks ? 'Yes' : 'No'}</li>
+                            <li>Rust: ${terminalsVisual.rust ? 'Yes' : 'No'}</li>
+                            <li>Leaks: ${terminalsVisual.leaks ? 'Yes' : 'No'}</li>
+                        </ul>
+                    </div>
+                </div>
+                <p><strong>Weight:</strong> ${physicalInspection.weight_confirmation || 'N/A'} ${physicalInspection.weight_confirmation ? 'kg' : ''}</p>
+                <p><strong>JKT Compatibility:</strong> ${physicalInspection.connector_jkt_compatibility ? 'Yes' : 'No'}</p>
+                <p><strong>Serial Match:</strong> ${physicalInspection.serial_match_waybill ? 'Yes' : 'No'}</p>
+                
+                <hr>
+                <h6>Telemetry Data</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Voltage:</strong> ${telemetryData.voltage?.value || 'N/A'} ${telemetryData.voltage?.value ? 'V' : ''} ${telemetryData.voltage?.confirmed ? '✓' : '✗'}</p>
+                        <p><strong>Temperature:</strong> ${telemetryData.temperature?.value || 'N/A'} ${telemetryData.temperature?.value ? '°C' : ''} ${telemetryData.temperature?.confirmed ? '✓' : '✗'}</p>
+                        <p><strong>SOC:</strong> ${telemetryData.soc?.value || 'N/A'} ${telemetryData.soc?.value ? '%' : ''} ${telemetryData.soc?.confirmed ? '✓' : '✗'}</p>
+                        <p><strong>Cell Voltages:</strong> ${telemetryData.individual_cell_voltage?.confirmed ? '✓' : '✗'}</p>
+                        ${telemetryData.individual_cell_voltage?.value ? `<div class="mt-2"><small class="text-muted d-block">Cell Voltage Data:</small><pre class="bg-light p-2 rounded" style="font-size: 0.8rem; max-height: 100px; overflow-y: auto;">${JSON.stringify(telemetryData.individual_cell_voltage.value, null, 2)}</pre></div>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Cycle Count:</strong> ${telemetryData.cycle_count?.value || 'N/A'} ${telemetryData.cycle_count?.confirmed ? '✓' : '✗'}</p>
+                        <p><strong>Location:</strong> ${telemetryData.lat_long?.value || 'N/A'} ${telemetryData.lat_long?.confirmed ? '✓' : '✗'}</p>
+                        <p><strong>Differential Voltage:</strong> ${telemetryData.differential_voltage?.value || 'N/A'} ${telemetryData.differential_voltage?.value ? 'V' : ''} ${telemetryData.differential_voltage?.confirmed ? '✓' : '✗'}</p>
+                    </div>
+                </div>
+                ${Object.keys(telemetryData).length === 0 ? '<p class="text-muted"><em>No telemetry data received from the backend</em></p>' : ''}
+                
+                ${
+                  form.notes
+                    ? `
+                <hr>
+                <h6>Notes</h6>
+                <p>${form.notes}</p>
+                `
+                    : ''
+                }
+                
+                ${
+                  form.battery_image_url || form.terminals_image_url
+                    ? `
+                <hr>
+                <h6>Images</h6>
+                <div class="row">
+                    ${
+                      form.battery_image_url
+                        ? `
+                    <div class="col-md-6 mb-3">
+                        <h6>Battery Image</h6>
+                        <img src="${form.battery_image_url}" class="img-fluid img-thumbnail view-image-btn" 
+                             data-image-url="${form.battery_image_url}" 
+                             data-image-title="Battery Image - ${form.battery_serial}" 
+                             style="cursor: pointer; max-height: 200px;" 
+                             alt="Battery Image">
+                    </div>
+                    `
+                        : ''
+                    }
+                    ${
+                      form.terminals_image_url
+                        ? `
+                    <div class="col-md-6 mb-3">
+                        <h6>Terminals Image</h6>
+                        <img src="${form.terminals_image_url}" class="img-fluid img-thumbnail view-image-btn" 
+                             data-image-url="${form.terminals_image_url}" 
+                             data-image-title="Terminals Image - ${form.battery_serial}" 
+                             style="cursor: pointer; max-height: 200px;" 
+                             alt="Terminals Image">
+                    </div>
+                    `
+                        : ''
+                    }
+                </div>
+                `
+                    : ''
+                }
+            `;
+      }
+
+      function editQCForm(id) {
+        window.location.href = `qc-form.html?id=${id}`;
+      }
+
+      async function deleteQCForm(id) {
+        if (!confirm('Are you sure you want to delete this QC form?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/qc-forms/${id}`, {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            alert('QC form deleted successfully');
+            loadQCForms(currentPage);
+            loadStatistics();
+          } else {
+            alert('Failed to delete QC form');
+          }
+        } catch (error) {
+          console.error('Error deleting QC form:', error);
+          alert('Error deleting QC form');
+        }
+      }
+
+      // Function to view image in modal
+      function viewImage(imageUrl, title) {
+        console.log('Opening image:', imageUrl, title); // Debug log
+
+        // Validate image URL
+        if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+          alert('Image not available');
+          return;
+        }
+
+        // Remove existing modal if present
+        const existingModal = document.getElementById('imageModal');
+        if (existingModal) {
+          existingModal.remove();
+        }
+
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'imageModal';
+        modal.tabIndex = -1;
+        modal.innerHTML = `
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">${title}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body text-center p-0">
+                <div class="position-relative">
+                  <img 
+                    src="${imageUrl}" 
+                    class="img-fluid w-100" 
+                    alt="${title}" 
+                    style="max-height: 80vh; object-fit: contain; background: #f8f9fa;"
+                    id="modalImage"
+                  >
+                  <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center d-none" id="imageLoader">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <a href="${imageUrl}" target="_blank" class="btn btn-primary">
+                  <i class="fas fa-external-link-alt me-1"></i>
+                  Open in New Tab
+                </a>
+                <button type="button" class="btn btn-outline-secondary download-image-btn" data-image-url="${imageUrl}" data-image-title="${title}">
+                  <i class="fas fa-download me-1"></i>
+                  Download
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Add modal to body
+        document.body.appendChild(modal);
+
+        // Show the modal
+        const bootstrapModal = new bootstrap.Modal(modal, {
+          backdrop: true,
+          keyboard: true,
+          focus: true,
+        });
+
+        bootstrapModal.show();
+
+        // Clean up when modal is hidden
+        modal.addEventListener('hidden.bs.modal', function () {
+          modal.remove();
+        });
+
+        // Show loader while image loads
+        const img = modal.querySelector('#modalImage');
+        const loader = modal.querySelector('#imageLoader');
+
+        img.addEventListener('loadstart', function () {
+          loader.classList.remove('d-none');
+        });
+
+        img.addEventListener('load', function () {
+          loader.classList.add('d-none');
+          this.style.background = 'transparent';
+        });
+
+        img.addEventListener('error', function () {
+          loader.classList.add('d-none');
+          this.src =
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBmb3VuZDwvdGV4dD48L3N2Zz4=';
+          this.alt = 'Image not found';
+          console.error('Failed to load image:', imageUrl);
+        });
+      }
+
+      // Function to download image
+      function downloadImage(imageUrl, title) {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = title.replace(/[^a-zA-Z0-9.-]/g, '_') + '.jpg';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    </script>
+  </body>
+</html>

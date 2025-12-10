@@ -1,0 +1,15 @@
+*.js
+!jest.config.js
+!dashboard-test.js
+!public/js/battery-soc-checker.js
+!__mocks__/**/*.js
+*.d.ts
+node_modules
+package-lock.json
+.DS_Store
+dist
+.env
+test.sql
+.vscode
+coverage
+docs
